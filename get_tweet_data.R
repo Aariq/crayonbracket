@@ -10,7 +10,7 @@ library(rtweet)
 
 crayonbracket <- search_tweets("#crayonbracket Match#", include_rts = FALSE)
 crayonbracket
-View(crayonbracket)
+# View(crayonbracket)
 
 
 # Wrangle data ------------------------------------------------------------
@@ -37,14 +37,45 @@ colors <-
 
 polls <- bracket_2 |> filter(poll) |> select(match, poll_id = id_str)
 
-colors_polls <- full_join(colors, polls)
-
+colors_polls <- 
+  full_join(colors, polls) |>
+  #assuming that first color is always the left/first option and second color is
+  #always the right/second option
+  unnest("colors") |>
+  group_by(match) |> 
+  mutate(position = 1:2)
 
 # Get poll results --------------------------------------------------------
 
 #functionality not in `rtweet` (yet), but can use the API still
 
-
+bearer_token <- Sys.getenv("twitter_bearer_token")
 headers <- c(
-  'Authorization' = 'Bearer AAAAAAAAAAAAAAAAAAAAAMvffwEAAAAA4Y2LHaw%2FQ%2Fv1vEBJCg8az5bNgnw%3DExZpZkaqIr6n4IEveUeIdaTTW9pmbbdD9UHEsVEOxlbGJ06Oda'
+  'Authorization' = paste0('Bearer ', bearer_token)
 )
+
+url <- "https://api.twitter.com/"
+base_path <- c("2", "tweets")
+
+
+get_poll_result <- function(poll_id) {
+  poll_result <-
+    httr::GET(
+      url = url,
+      path = c(base_path, poll_id),
+      query = list(expansions = "attachments.poll_ids"),
+      add_headers(headers)
+    ) |>
+    content()
+  
+  map_df(1:2, ~poll_result$includes$polls[[1]]$options[[.x]] |> as_tibble() |> add_column(poll_id = poll_id))
+}
+
+poll_results <- map_df(unique(colors_polls$poll_id), get_poll_result)
+
+
+# join with the rest of the data ------------------------------------------
+
+full_data <- full_join(colors_polls, poll_results, by = c("poll_id", "position"))
+
+write_rds(full_data, paste0("tweet_data_", Sys.Date()))
