@@ -5,10 +5,14 @@
 <!-- badges: end -->
 
 [#crayonbracket](<https://twitter.com/hashtag/crayonbracket>) is a bracket style tournament on Twitter organized by [@sbarolo](<https://twitter.com/sbarolo>).
-I used the [`rtweet`](https://docs.ropensci.org/rtweet/) and [`httr`](https://httr.r-lib.org/) R packages to access the Twitter poll results for each matchup and pulled the vote totals for each color as well as the hex codes for the color.
+I used the [`rtweet`](https://docs.ropensci.org/rtweet/) and [`httr`](https://httr.r-lib.org/) R packages to access the Twitter poll results for each match-up and pulled the vote totals for each color as well as the hex codes for the color.
 I then used the [`colorspace`](http://colorspace.r-forge.r-project.org/) R package to convert the hex codes into the LUV color space.
 
-Data is provided in the `data/` folder
+Code in `get_tweet_data.R` accesses the Twitter API to get the data (you'll need a bearer token for this to run on your machine).
+
+Code in `color_distance.R` takes that data, does some color space transformations, and makes a plot.
+
+Cleaned data is provided in the `data/` folder
 
 ## Does color difference affect win margin?
 
