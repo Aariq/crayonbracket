@@ -98,4 +98,5 @@ full_data <-
     TRUE ~ NA_character_
   ))
 
-write_rds(full_data, paste0("tweet_data_", Sys.Date(), ".rds"))
+write_rds(full_data, paste0("data/tweet_data_", Sys.Date(), ".rds"))
+write_csv(full_data, paste0("data/crayonbracket-data_", Sys.Date(), ".csv"))
