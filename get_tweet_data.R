@@ -78,4 +78,4 @@ poll_results <- map_df(unique(colors_polls$poll_id), get_poll_result)
 
 full_data <- full_join(colors_polls, poll_results, by = c("poll_id", "position"))
 
-write_rds(full_data, paste0("tweet_data_", Sys.Date()))
+write_rds(full_data, paste0("tweet_data_", Sys.Date(), ".rds"))
