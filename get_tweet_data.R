@@ -7,8 +7,9 @@ library(rtweet)
 
 
 # Find tweets --------------------------------------------------------------
-
-crayonbracket <- search_tweets("#crayonbracket Match#", include_rts = FALSE)
+#only finds tweets from the most recent 10 days, so might need to combine data from multiple runs of this code.  Getting most recent 200 tweets to hopefully capture all 64 matches (2 tweets per match).
+crayonbracket <-
+  search_tweets("#crayonbracket Match#", n = 200, include_rts = FALSE)
 crayonbracket
 # View(crayonbracket)
 
@@ -48,7 +49,7 @@ colors_polls <-
 # Get poll results --------------------------------------------------------
 
 #functionality not in `rtweet` (yet), but can use the API still
-
+#To run this, you need a twitter API bearer token.  Save it in a .Renviron file to use this code.
 bearer_token <- Sys.getenv("twitter_bearer_token")
 headers <- c(
   'Authorization' = paste0('Bearer ', bearer_token)
@@ -56,7 +57,6 @@ headers <- c(
 
 url <- "https://api.twitter.com/"
 base_path <- c("2", "tweets")
-
 
 get_poll_result <- function(poll_id) {
   poll_result <-

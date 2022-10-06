@@ -18,7 +18,8 @@ full_data <- read_rds("tweet_data_2022-10-06.rds")
 # Is Euclidean distance a good idea?
 
 #Create matrix column of HSV coordinates for each color
-dist_diff <- full_data |> mutate(hsv = colors |> hex2RGB() |> as("HSV") |> coords()) |> 
+dist_diff <- full_data |>
+  mutate(hsv = colors |> hex2RGB() |> as("HSV") |> coords()) |> 
   #For each match ...
   group_by(match) |> 
   #Use the matrix to calculate euclidean distance
