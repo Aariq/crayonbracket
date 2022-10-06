@@ -18,20 +18,31 @@ full_data <- read_rds("tweet_data_2022-10-06.rds")
 # Is Euclidean distance a good idea?
 
 #Create matrix column of HSV coordinates for each color
-dist_diff <- full_data |>
-  mutate(hsv = colors |> hex2RGB() |> as("HSV") |> coords()) |> 
+dist_diff <- 
+  full_data |>
+  mutate(coords = colors |> hex2RGB() |> as("LUV") |> coords()) |> 
   #For each match ...
   group_by(match) |> 
   #Use the matrix to calculate euclidean distance
-  summarise(distance = dist(hsv, method = "euclidean"),
-            poll_margin = abs(diff(votes)))
+  summarise(distance = dist(coords, method = "euclidean"),
+            poll_margin = abs(diff(votes)),
+            division = unique(division),
+            match_name = glue::glue_collapse(color_name, sep = " vs. "))
 
-ggplot(dist_diff, aes(x = distance, y = poll_margin)) + 
+division_color <- 
+  c(Blue = "blue", Grayscale = "grey", Green = "green", `Orange/Brown` = "brown", Pink = "pink", Purple = "purple", Red = "red", Yellow = "goldenrod")
+
+ggplot(dist_diff, aes(x = distance, y = poll_margin, color = division)) + 
   geom_point() +
-  geom_label_repel(aes(label = match)) +
+  geom_label_repel(aes(label = match), show.legend = FALSE) +
+  # geom_label(aes(label = match)) +
+  scale_color_manual(values = division_color) +
   labs(title = "Are #crayonbracket win margins related to color similarity?",
-       x = "Euclidean distance in HSV color space",
-       y = "Win margin (|color 1 - color 2|)") +
-  theme_bw()
+       subtitle = "labels = match #",
+       x = "Color difference (distance in LUV space)",
+       y = "Win margin (votes)") +
+  theme_dark() +
+  theme(text = element_text(size = 12))
 
-ggsave("prelim-data.png")
+ggsave("color_diff_vs_win_margin.png", width = 1200*2, height = 675*2, unit = "px")
+

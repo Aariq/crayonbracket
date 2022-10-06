@@ -68,7 +68,9 @@ get_poll_result <- function(poll_id) {
     ) |>
     content()
   
-  map_df(1:2, ~poll_result$includes$polls[[1]]$options[[.x]] |> as_tibble() |> add_column(poll_id = poll_id))
+  map_df(1:2, ~poll_result$includes$polls[[1]]$options[[.x]] |>
+           as_tibble() |>
+           add_column(poll_id = poll_id))
 }
 
 poll_results <- map_df(unique(colors_polls$poll_id), get_poll_result)
@@ -77,5 +79,23 @@ poll_results <- map_df(unique(colors_polls$poll_id), get_poll_result)
 # join with the rest of the data ------------------------------------------
 
 full_data <- full_join(colors_polls, poll_results, by = c("poll_id", "position"))
+
+# Clean data ----------------------------------------------------------
+
+full_data <-
+  full_data |> 
+  mutate(color_name = str_remove(label, " \\(.+\\)")) |> 
+  #add division
+  mutate(division = case_when(
+    match %in% c(1:4, 31, 32, 48) ~ "Pink",
+    match %in% c(5, 6, 33) ~ "Red",
+    match %in% c(7:14, 34:37, 49, 50, 55) ~ "Orange/Brown",
+    match %in% c(15, 16, 38) ~ "Yellow",
+    match %in% c(17:21, 39:40, 51) ~ "Purple",
+    match %in% c(21:24, 41:43, 52, 56) ~ "Blue",
+    match %in% c(25:28, 44:45, 53) ~ "Green",
+    match %in% c(29:30, 46:47, 54) ~ "Grayscale",
+    TRUE ~ NA_character_
+  ))
 
 write_rds(full_data, paste0("tweet_data_", Sys.Date(), ".rds"))
