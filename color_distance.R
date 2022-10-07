@@ -4,7 +4,7 @@ library(colorspace)
 library(tidyverse)
 library(ggrepel)
 
-full_data <- read_rds("tweet_data_2022-10-06.rds")
+full_data <- read_rds("data/tweet_data_2022-10-06.rds")
 
 
 # Plot colors? ------------------------------------------------------------
@@ -26,21 +26,26 @@ dist_diff <-
   #Use the matrix to calculate euclidean distance
   summarise(distance = dist(coords, method = "euclidean"),
             poll_margin = abs(diff(votes)),
+            winner = color_name[which.max(votes)],
+            total_votes = sum(votes),
             division = unique(division),
-            match_name = glue::glue_collapse(color_name, sep = " vs. "))
+            match_name = glue::glue_collapse(color_name, sep = " vs. ")) |> 
+  mutate(margin_prop = poll_margin/total_votes) |> 
+  select(match, match_name, winner, division, poll_margin, total_votes, margin_prop, distance)
 
 division_color <- 
   c(Blue = "blue", Grayscale = "grey", Green = "green", `Orange/Brown` = "brown", Pink = "pink", Purple = "purple", Red = "red", Yellow = "goldenrod")
 
-ggplot(dist_diff, aes(x = distance, y = poll_margin, color = division)) + 
+ggplot(dist_diff, aes(x = distance, y = margin_prop, color = division)) + 
   geom_point() +
   geom_label_repel(aes(label = match), show.legend = FALSE) +
   # geom_label(aes(label = match)) +
   scale_color_manual(values = division_color) +
+  scale_y_continuous(labels = scales::percent) +
   labs(title = "Are #crayonbracket win margins related to color similarity?",
        subtitle = "labels = match #",
        x = "Color difference (distance in LUV space)",
-       y = "Win margin (votes)") +
+       y = "% Win (win margin / total votes)") +
   theme_dark() +
   theme(text = element_text(size = 12))
 
