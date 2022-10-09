@@ -4,7 +4,7 @@ library(colorspace)
 library(tidyverse)
 library(ggrepel)
 
-full_data <- read_rds("data/tweet_data_2022-10-06.rds")
+full_data <- read_rds("data/tweet_data_2022-10-09.rds")
 
 
 # Plot colors? ------------------------------------------------------------
