@@ -8,10 +8,18 @@ library(rtweet)
 
 # Find tweets --------------------------------------------------------------
 #only finds tweets from the most recent 10 days, so might need to combine data from multiple runs of this code.  Getting most recent 200 tweets to hopefully capture all 64 matches (2 tweets per match).
-crayonbracket <-
+crayonbracket_today <-
   search_tweets("#crayonbracket Match#", n = 200, include_rts = FALSE)
-crayonbracket
-# View(crayonbracket)
+crayonbracket_today
+# View(crayonbracket_today)
+
+write_csv(crayonbracket_today, paste0("data/crayonbracket_raw_", Sys.Date(), ".csv"))
+
+# Since this only finds tweets from the past 9 or 10 days, I'll need to combine all the data and use `lookup_tweets()` to get all the text
+
+tweet_ids <- map(list.files("data", "crayonbracket.+\\.csv", full.names = TRUE), ~ read_csv(.x) |> pull(id_str)) |> unlist() |> unique()
+
+crayonbracket <- lookup_tweets(tweet_ids)
 
 
 # Wrangle data ------------------------------------------------------------
@@ -99,4 +107,4 @@ full_data <-
   ))
 
 write_rds(full_data, paste0("data/tweet_data_", Sys.Date(), ".rds"))
-write_csv(full_data, paste0("data/crayonbracket-data_", Sys.Date(), ".csv"))
+write_csv(full_data, paste0("data/crayonbracket-", Sys.Date(), ".csv"))
