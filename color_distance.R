@@ -4,8 +4,8 @@ library(colorspace)
 library(tidyverse)
 library(ggrepel)
 
-full_data <- read_rds("data/tweet_data_2022-10-09.rds")
-
+full_data <- read_csv("data/crayonbracket-2022-10-10.csv")
+full_data$match |> unique()
 
 # Plot colors? ------------------------------------------------------------
 # full_data |> 
