@@ -33,7 +33,7 @@ colors <-
 
 #extract poll IDs
 
-polls <- bracket_2 |> filter(poll) |> select(match, poll_id = id_str)
+polls <- bracket |> filter(poll) |> select(match, poll_id = id_str)
 
 colors_polls <- 
   full_join(colors, polls) |>

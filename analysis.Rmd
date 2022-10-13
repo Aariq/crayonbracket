@@ -1,0 +1,87 @@
+---
+title: "Color Analysis"
+author: "Eric R. Scott"
+date: "2022-10-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load packages and data --------------------------------------------------
+library(colorspace)
+library(tidyverse)
+library(ggrepel)
+library(performance)
+
+full_data <- read_rds("data/tweet_data_2022-10-09.rds")
+```
+
+# Is the difference between colors a main driver of how close a match is?
+
+In other words, do colors that are more different from eachother have a winner that wins by a greater number of votes?
+
+To understand this, first we need a metric of how different or similar colors are.  I pulled the hex codes for each crayon color from @sbarolo's tweets (assuming they are accurate and official Crayola hex colors).  I then transformed them to the LUV color space, which is relatively "percepturally uniform" meaning that we can use the Euclidean distance between colors in this space as a measure of similarity.
+
+```{r}
+#Create matrix column of HSV coordinates for each color
+dist_diff <- 
+  full_data |>
+  mutate(coords = colors |> hex2RGB() |> as("LUV") |> coords()) |> 
+  #For each match ...
+  group_by(match) |> 
+  #Use the matrix to calculate euclidean distance
+  summarise(
+    distance = as.numeric(dist(coords, method = "euclidean")), #color similarity
+    poll_margin = abs(diff(votes)), #how many votes did the winner win by?
+    winner = color_name[which.max(votes)], #which color won?
+    total_votes = sum(votes), #how many total votes?
+    division = unique(division), #what division were they in?
+    match_name = glue::glue_collapse(color_name, sep = " vs. ")
+  ) |> 
+  mutate(margin_prop = poll_margin/total_votes) |> #percentage win margin
+  select(match, match_name, winner, division, poll_margin, total_votes, margin_prop, distance)
+head(dist_diff)
+```
+
+Then we can plot these data:
+
+```{r}
+#manual color scale for division
+division_color <- 
+  c(Blue = "blue", Grayscale = "grey", Green = "green", `Orange/Brown` = "brown", Pink = "pink", Purple = "purple", Red = "red", Yellow = "goldenrod")
+
+ggplot(dist_diff, aes(x = distance, y = margin_prop, color = division)) + 
+  geom_point() +
+  geom_label_repel(aes(label = match), show.legend = FALSE) +
+  # geom_label(aes(label = match)) +
+  scale_color_manual(values = division_color) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Are #crayonbracket win margins related to color similarity?",
+       subtitle = "labels = match #",
+       x = "Color difference (distance in LUV space)",
+       y = "% Win (win margin / total votes)") +
+  theme_dark() +
+  theme(text = element_text(size = 12))
+```
+
+It doesn't look like there is any particularly strong pattern, but let's fit a model.
+
+Votes are a count variable, so maybe they're Poisson distributed?  I'm going to go with a Poisson GLM and use an offset of total votes to account for variation in "sampling effort"
+
+```{r}
+m <- 
+  glm(poll_margin ~ distance,
+      family = poisson,
+      offset = total_votes,
+      data = dist_diff,
+      maxit = 100)
+plot(m)
+performance::check_overdispersion(m)
+performance::check_model(m) #there's an NaN in rstandard(m) that causes this to error
+```
+
+
+
