@@ -97,5 +97,8 @@ Looks much better
 Anova(m2)
 ```
 
-Not significant!
+Not significant! So no relationship (so far) between win margin and color similarity
 
+# Question 2: Is number of votes related to saturation?
+
+I think people just like more saturated colors.  What is saturation and how is it represented in color space?
