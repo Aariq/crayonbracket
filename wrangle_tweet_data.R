@@ -1,29 +1,31 @@
-# Since get_tweet_data.R only finds tweets from the past 9 or 10 days, I'll need to combine all the data and use `lookup_tweets()` to get all the text.  Unfortunately, previous days of runs didn't take this into account, so data is formatted differently for each date.
-safe_pull <- possibly(pull, NA)
-tweet_ids <- 
-  map(list.files("data", "crayonbracket.+\\.csv", full.names = TRUE),
-      ~ {
-        df<- read_csv(.x) 
-        
-        id_str  <- df |> safe_pull(id_str)
-        poll_id <- df |> safe_pull(poll_id)
-        
-        unique(c(id_str, poll_id))
-        }) |>
-  unlist() |> unique() 
+library(tidyverse)
+library(rtweet)
+library(httr)
 
-tweets <- lookup_tweets(tweet_ids)
+# Read data, extract tweet IDs --------------------------------------------
+tweet_data <- read_csv("data/manual_entry.csv")
+tweet_data <- tweet_data |> 
+  mutate(id = str_extract(url, "(?<=https://twitter.com/sbarolo/status/)\\d+"))
+
+# Lookup tweets -----------------------------------------------------------
+tweets <- lookup_tweets(tweet_data$id)
+
+
+# Wrangle data ------------------------------------------------------------
 bracket <- tweets |> 
   select(id_str, full_text) |> 
-  mutate(match = str_extract(full_text, "(?<=Match #)\\d+") |> as.numeric()) |> 
+  mutate(match = str_extract(full_text, "(?<=Match #)\\s?\\d+") |> as.numeric()) |> 
   mutate(poll = str_detect(full_text, "photo in previous tweet")) |> 
   select(match, poll, id_str, full_text) |> 
   filter(!is.na(match)) |> 
   arrange(match)
 bracket
-bracket$match |> unique() #missing 13, 19, 20, 21, 27, 31, 33, 34, 41
-bracket |> count(match) |> filter(n != 2) #quite a few are matching one of the two tweets.  Buh.
-#now extract colors??
+#any missing matches?
+bracket$match[!1:max(bracket$match) %in% unique(bracket$match)]
+
+#any matches missing one tweet?
+bracket |> count(match) |> filter(n != 2) 
+
 
 colors <-
   bracket |>
@@ -95,5 +97,4 @@ full_data <-
     TRUE ~ NA_character_
   ))
 
-write_rds(full_data, paste0("data/tweet_data_", Sys.Date(), ".rds"))
-write_csv(full_data, paste0("data/crayonbracket-", Sys.Date(), ".csv"))
+write_csv(full_data, "data/crayonbracket.csv")
