@@ -2,7 +2,7 @@
 title: "Color Analysis"
 author: "Eric R. Scott"
 date: "2022-10-07"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -44,7 +44,7 @@ dist_diff <-
     match_name = glue::glue_collapse(color_name, sep = " vs. ")
   ) |> 
   mutate(margin_prop = poll_margin/total_votes) |> #percentage win margin
-  select(match, match_name, winner, division, poll_margin, total_votes, margin_prop, distance)
+  dplyr::select(match, match_name, winner, division, poll_margin, total_votes, margin_prop, distance)
 head(dist_diff)
 ```
 
@@ -67,6 +67,7 @@ ggplot(dist_diff, aes(x = distance, y = margin_prop, color = division)) +
        y = "% Win (win margin / total votes)") +
   theme_dark() +
   theme(text = element_text(size = 12))
+ggsave("color_diff_vs_win_margin.png", width = 1200*2, height = 675*2, unit = "px")
 ```
 
 It doesn't look like there is any particularly strong pattern, but let's fit a model.
@@ -84,6 +85,7 @@ performance::check_model(m)
 ```
 
 There's overdispersion, so let's try a negative binomial model.
+
 ```{r}
 m2 <- 
   glm.nb(poll_margin ~ distance + offset(log(total_votes)),
