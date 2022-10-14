@@ -15,8 +15,10 @@ library(colorspace)
 library(tidyverse)
 library(ggrepel)
 library(performance)
+library(MASS)
+library(car)
 
-full_data <- read_rds("data/tweet_data_2022-10-09.rds")
+full_data <- read_csv("data/crayonbracket.csv")
 ```
 
 # Is the difference between colors a main driver of how close a match is?
@@ -75,13 +77,25 @@ Votes are a count variable, so maybe they're Poisson distributed?  I'm going to 
 m <- 
   glm(poll_margin ~ distance,
       family = poisson,
-      offset = total_votes,
-      data = dist_diff,
-      maxit = 100)
-plot(m)
+      offset = log(total_votes),
+      data = dist_diff)
 performance::check_overdispersion(m)
-performance::check_model(m) #there's an NaN in rstandard(m) that causes this to error
+performance::check_model(m)
 ```
 
+There's overdispersion, so let's try a negative binomial model.
+```{r}
+m2 <- 
+  glm.nb(poll_margin ~ distance + offset(log(total_votes)),
+         data = dist_diff)
+performance::check_model(m2)
+```
 
+Looks much better
+
+```{r}
+Anova(m2)
+```
+
+Not significant!
 
